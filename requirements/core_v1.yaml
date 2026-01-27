@@ -1,0 +1,40 @@
+name: "Boston College Core Requirements"
+version: "1.0"
+type: "ALL_OF"
+requirements:
+  - name: "Arts"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["ARTS1101", "ARTS1102", "ARTH1101", "ARTH1102"]
+  - name: "Cultural Diversity"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["AADS1101", "AADS2278"]
+  - name: "History"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["HIST1001", "HIST1002"]
+  - name: "Literature"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["ENGL1001", "ENGL1002"]
+  - name: "Mathematics"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["MATH1100", "MATH1101"]
+  - name: "Natural Science"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["BIOL1100", "CHEM1100", "PHYS1100"]
+  - name: "Philosophy"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["PHIL1010", "PHIL1020"]
+  - name: "Theology"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["THEO1000", "THEO1001"]
+  - name: "Writing"
+    type: "ANY_OF"
+    requirements:
+      - courses: ["ENGL1010", "ENGL1011"]

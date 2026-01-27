@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Assistant{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>AI Assistant</h1>
+    <p>Ask questions about your degree requirements and get course recommendations.</p>
+    
+    <div id="chat-container" style="margin: 2rem 0; min-height: 400px; border: 1px solid #ddd; padding: 1rem; border-radius: 4px;">
+        <div id="messages"></div>
+    </div>
+    
+    <form id="chat-form" style="display: flex; gap: 1rem;">
+        {% csrf_token %}
+        <input type="text" id="query-input" placeholder="Ask a question..." style="flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+        <button type="submit" class="btn">Send</button>
+    </form>
+</div>
+
+<script>
+document.getElementById('chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const query = document.getElementById('query-input').value;
+    const messagesDiv = document.getElementById('messages');
+    
+    // Add user message
+    messagesDiv.innerHTML += '<div><strong>You:</strong> ' + query + '</div>';
+    document.getElementById('query-input').value = '';
+    
+    // Get AI response
+    fetch('{% url "assistant_query" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({query: query, constraints: {}})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            messagesDiv.innerHTML += '<div><strong>Assistant:</strong> ' + data.response + '</div>';
+        } else {
+            messagesDiv.innerHTML += '<div style="color: red;">Error: ' + data.error + '</div>';
+        }
+    });
+});
+</script>
+{% endblock %}

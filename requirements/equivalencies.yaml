@@ -1,0 +1,7 @@
+equivalencies:
+  # Cross-listed courses
+  ARTH2278:
+    - AADS2278
+  AADS2278:
+    - ARTH2278
+  # Add more equivalencies as needed

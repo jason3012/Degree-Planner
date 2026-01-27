@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Core Requirement Status{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Core Requirement Status</h1>
+    <p>Completed: {{ completed_count }} | In Progress: {{ in_progress_count }}</p>
+    
+    <div style="margin-top: 2rem;">
+        <h2>Requirements</h2>
+        {% include 'planner/_requirement_tree.html' with requirement=evaluation %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Dashboard</h1>
+    
+    {% if latest_audit %}
+        <p>Latest audit uploaded: {{ latest_audit.created_at|date:"F d, Y" }}</p>
+        <a href="{% url 'audit_confirm' latest_audit.id %}" class="btn">Review Audit</a>
+        <a href="{% url 'core_status' %}" class="btn">View Core Status</a>
+    {% else %}
+        <p>No audit uploaded yet.</p>
+        <a href="{% url 'audit_upload' %}" class="btn">Upload Degree Audit</a>
+    {% endif %}
+</div>
+{% endblock %}

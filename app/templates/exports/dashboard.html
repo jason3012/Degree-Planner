@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Export Data{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Export Options</h1>
+    
+    <div style="margin: 2rem 0;">
+        <h2>CSV Exports</h2>
+        <a href="{% url 'export_csv_core_status' %}" class="btn">Download Core Status CSV</a>
+        <a href="{% url 'export_csv_available_sections' %}" class="btn">Download Available Sections CSV</a>
+    </div>
+    
+    <div style="margin: 2rem 0;">
+        <h2>Google Sheets</h2>
+        <button onclick="exportToSheets()" class="btn">Export to Google Sheets</button>
+    </div>
+</div>
+
+<script>
+function exportToSheets() {
+    fetch('{% url "export_google_sheets" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Success! Sheet URL: ' + data.url);
+            window.open(data.url, '_blank');
+        } else {
+            alert('Error: ' + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

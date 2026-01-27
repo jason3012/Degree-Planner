@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirm Extracted Courses{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Confirm Extracted Courses</h1>
+    <p>Review and edit the courses extracted from your audit PDF.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Term</th>
+                    <th>Course Code</th>
+                    <th>Credits</th>
+                    <th>Status</th>
+                    <th>Grade</th>
+                    <th>Title</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td>{{ course.term_code }}</td>
+                    <td>{{ course.course_code }}</td>
+                    <td>{{ course.credits }}</td>
+                    <td>
+                        <select name="course_{{ course.id }}_status">
+                            <option value="completed" {% if course.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="in_progress" {% if course.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                            <option value="withdrawn" {% if course.status == 'withdrawn' %}selected{% endif %}>Withdrawn</option>
+                        </select>
+                    </td>
+                    <td>{{ course.grade_token }}</td>
+                    <td>{{ course.title_raw|truncatewords:10 }}</td>
+                    <td>
+                        <button type="submit" name="delete_course" value="{{ course.id }}" class="btn btn-secondary">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 1rem;">
+            <button type="submit" name="save" class="btn">Save Changes</button>
+            <button type="submit" name="confirm" class="btn">Confirm and Continue</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

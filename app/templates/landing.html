@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Degree Planner - Home{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Welcome to Degree Planner</h1>
+    <p>Plan your degree requirements and find available course sections.</p>
+    <a href="{% url 'account_login' %}" class="btn">Get Started</a>
+</div>
+{% endblock %}

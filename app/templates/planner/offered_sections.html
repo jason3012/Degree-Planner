@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Offered Sections{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h1>Offered Sections - {{ current_semester.label }}</h1>
+    
+    <form method="get" style="margin: 1rem 0;">
+        <label>Day: <input type="text" name="day" value="{{ day_filter }}" placeholder="M, Tu, W, Th, F"></label>
+        <label>Time Start: <input type="time" name="time_start" value="{{ time_start }}"></label>
+        <label>Time End: <input type="time" name="time_end" value="{{ time_end }}"></label>
+        <button type="submit" class="btn">Filter</button>
+    </form>
+    
+    {% for req_name, sections in requirement_sections.items %}
+        <div class="card" style="margin-top: 1rem;">
+            <h2>{{ req_name }}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Instructor</th>
+                        <th>Days</th>
+                        <th>Time</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for section in sections %}
+                    <tr>
+                        <td>{{ section.full_code }} - {{ section.course.title }}</td>
+                        <td>{{ section.instructor }}</td>
+                        <td>{{ section.meetings_json.days|join:", " }}</td>
+                        <td>{{ section.meetings_json.start_time }} - {{ section.meetings_json.end_time }}</td>
+                        <td>{{ section.location }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">No sections available</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

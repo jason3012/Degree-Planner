@@ -1,0 +1,26 @@
+<div style="margin-left: 1rem; margin-top: 0.5rem;">
+    <div>
+        <strong>{{ requirement.name|default:"Requirement" }}</strong>
+        <span class="status-{{ requirement.status }}">
+            ({{ requirement.status|upper }})
+        </span>
+    </div>
+    
+    {% if requirement.satisfied_by %}
+        <div style="margin-left: 1rem; color: #28a745;">
+            Satisfied by: {{ requirement.satisfied_by|join:", " }}
+        </div>
+    {% endif %}
+    
+    {% if requirement.still_needed %}
+        <div style="margin-left: 1rem; color: #dc3545;">
+            Still needed: {{ requirement.still_needed|join:", " }}
+        </div>
+    {% endif %}
+    
+    {% if requirement.children %}
+        {% for child in requirement.children %}
+            {% include 'planner/_requirement_tree.html' with requirement=child %}
+        {% endfor %}
+    {% endif %}
+</div>
