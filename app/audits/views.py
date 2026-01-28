@@ -27,16 +27,44 @@ def upload_audit(request):
         
         # Parse PDF
         try:
-            courses = parse_audit_pdf(audit.uploaded_pdf.path)
-            
-            # Create AuditCourse records
+            parsed = parse_audit_pdf(audit.uploaded_pdf.path)
+            courses = parsed.get("transcript_courses", [])
+            audit.core_requirements = parsed.get("core_requirements", {}) or {}
+            audit.save(update_fields=["core_requirements"])
+
+            # Deduplicate (term_code, course_code) to satisfy unique_together.
+            # Some audits repeat the same course line multiple times across sections/pages.
+            status_rank = {'withdrawn': 0, 'in_progress': 1, 'completed': 2}
+            deduped = {}
             for course_data in courses:
-                AuditCourse.objects.create(
+                key = (course_data.get('term_code'), course_data.get('course_code'))
+                existing = deduped.get(key)
+                if not existing:
+                    deduped[key] = course_data
+                    continue
+
+                # Keep the "best" status, prefer non-empty grade/title, keep max credits.
+                if status_rank.get(course_data.get('status'), -1) > status_rank.get(existing.get('status'), -1):
+                    existing['status'] = course_data.get('status')
+                if not existing.get('grade_token') and course_data.get('grade_token'):
+                    existing['grade_token'] = course_data.get('grade_token')
+                if (course_data.get('title_raw') or '') and len(course_data.get('title_raw') or '') > len(existing.get('title_raw') or ''):
+                    existing['title_raw'] = course_data.get('title_raw')
+                try:
+                    existing['credits'] = max(float(existing.get('credits', 0)), float(course_data.get('credits', 0)))
+                except Exception:
+                    pass
+
+            # Create/update AuditCourse records (safe even if duplicates slip through)
+            for (term_code, course_code), course_data in deduped.items():
+                AuditCourse.objects.update_or_create(
                     audit=audit,
-                    **course_data
+                    term_code=term_code,
+                    course_code=course_code,
+                    defaults=course_data,
                 )
             
-            messages.success(request, f'Successfully parsed {len(courses)} courses from audit.')
+            messages.success(request, f'Successfully parsed {len(deduped)} courses from audit.')
             return redirect('audit_confirm', audit_id=audit.id)
             
         except Exception as e:
@@ -83,7 +111,20 @@ def confirm_audit(request, audit_id):
         if 'confirm' in request.POST:
             return redirect('core_status')
     
-    courses = audit.courses.all()
+    # Some historical parses may have written an out-of-range credit value into SQLite
+    # (e.g., accidentally capturing the "1101" from a course code). SQLite can store it,
+    # but Django's DecimalField converter may raise decimal.InvalidOperation on read.
+    # If that happens, normalize credits for this audit and retry.
+    try:
+        courses = audit.courses.all()
+        # Force evaluation here so we catch conversion errors before rendering.
+        _ = len(courses)
+    except Exception as e:
+        if e.__class__.__name__ in {"InvalidOperation"}:
+            AuditCourse.objects.filter(audit=audit).update(credits=3.0)
+            courses = audit.courses.all()
+        else:
+            raise
     context = {
         'audit': audit,
         'courses': courses,

@@ -12,3 +12,5 @@
 - AI assistant using Gemini API with grounded recommendations
 - User authentication with Django Allauth and Google OAuth
 - UI templates for landing, dashboard, audit upload, core status, sections, and AI chat
+- Google-only login flow (Get Started → Google OAuth)
+- State-machine PDF parsing for transcript courses + core requirements (improved accuracy)

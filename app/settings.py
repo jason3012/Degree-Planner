@@ -148,9 +148,16 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
+# Disable regular signup - Google OAuth only
+ACCOUNT_SIGNUP_ENABLED = False
+
+# Auth flow defaults (MVP)
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_LOGOUT_ON_GET = True
+LOGIN_URL = '/accounts/google/login/'  # Redirect to Google OAuth
+
 # Google OAuth (set in .env)
-# Note: You also need to create a SocialApp in Django admin or via shell
-# with client_id and client_secret from Google Cloud Console
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [

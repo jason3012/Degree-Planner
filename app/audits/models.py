@@ -11,6 +11,7 @@ class Audit(models.Model):
     uploaded_pdf = models.FileField(upload_to='audits/%Y/%m/%d/')
     created_at = models.DateTimeField(auto_now_add=True)
     parse_version = models.CharField(max_length=20, default='1.0')
+    core_requirements = models.JSONField(default=dict, blank=True)
     
     class Meta:
         ordering = ['-created_at']
