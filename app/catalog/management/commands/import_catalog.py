@@ -6,7 +6,7 @@ import re
 from typing import Dict, Optional
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from app.catalog.models import Semester, Course, Section
+from app.catalog.models import Semester, Course, Section, CoreTag
 
 
 def normalize_term(semester_str: str) -> tuple[str, str]:
@@ -122,6 +122,20 @@ def parse_meeting_text(meeting_str: str) -> Dict:
     return result
 
 
+def parse_core_tags(core_column: str) -> list[str]:
+    """
+    Parse core tags from CSV column (e.g. "Satisfies Core Requirement" or "satisfies_core_requirement").
+    Split by comma, trim whitespace. Skip empty and "None".
+    """
+    if not core_column or not str(core_column).strip():
+        return []
+    raw = str(core_column).strip()
+    if raw.lower() in ('none', 'n/a', '-'):
+        return []
+    tags = [t.strip() for t in raw.split(',') if t.strip() and t.strip().lower() != 'none']
+    return tags
+
+
 def import_catalog_csv(csv_path: str, semester_str: str, is_current: bool = False):
     """
     Import catalog CSV file.
@@ -219,6 +233,15 @@ def import_catalog_csv(csv_path: str, semester_str: str, is_current: bool = Fals
                         section.meetings_json = meetings_data
                         section.location = meetings_data.get('location', '')
                         section.save()
+
+                    # Core tags: parse "satisfies_core_requirement" (or equivalent) column; create CoreTag rows; attach to section
+                    core_col = row.get('satisfies_core_requirement', '') or row.get('Satisfies Core Requirement', '')
+                    tag_names = parse_core_tags(core_col)
+                    tag_objs = []
+                    for name in tag_names:
+                        tag, _ = CoreTag.objects.get_or_create(name=name)
+                        tag_objs.append(tag)
+                    section.core_tags.set(tag_objs)
                     
                     imported_count += 1
                     

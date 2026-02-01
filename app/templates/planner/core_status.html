@@ -5,11 +5,84 @@
 {% block content %}
 <div class="card">
     <h1>Core Requirement Status</h1>
-    <p>Completed: {{ completed_count }} | In Progress: {{ in_progress_count }}</p>
-    
-    <div style="margin-top: 2rem;">
-        <h2>Requirements</h2>
-        {% include 'planner/_requirement_tree.html' with requirement=evaluation %}
-    </div>
+    <p class="muted">Counted/remaining from your audit; eligible Spring sections from catalog CSV core tags.</p>
+    {% if show_debug %}
+        <p><a href="?">Hide debug</a></p>
+    {% else %}
+        <p><a href="?debug=1">Show core debug panel</a></p>
+    {% endif %}
+
+    {% if not has_core_data %}
+        <p>No core requirement data from this audit. Re-upload your degree audit PDF to see status parsed from the audit.</p>
+    {% else %}
+        <div style="margin-top: 1.5rem;">
+            {% for item in core_list %}
+                <div class="core-category" style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid #e0e0e0; border-radius: 6px;">
+                    <strong>{{ item.name }}</strong>
+                    <span class="status-badge status-{{ item.status }}" style="margin-left: 0.5rem;">
+                        {{ item.status|upper }}
+                    </span>
+
+                    {% if item.completed_courses %}
+                        <div style="margin-top: 0.5rem; color: #28a745;">
+                            Counted so far: {{ item.completed_courses|join:", " }}
+                        </div>
+                    {% endif %}
+
+                    {% if item.in_progress_courses %}
+                        <div style="margin-top: 0.5rem; color: #856404;">
+                            In progress: {{ item.in_progress_courses|join:", " }}
+                        </div>
+                    {% endif %}
+
+                    {% if item.remaining_to_plan %}
+                        <div style="margin-top: 0.5rem; color: #dc3545;">
+                            Remaining to plan: {{ item.remaining_to_plan }} course{{ item.remaining_to_plan|pluralize }}
+                        </div>
+                    {% endif %}
+                    {% if item.remaining_to_complete and item.remaining_to_complete != item.remaining_to_plan %}
+                        <div style="margin-top: 0.25rem; color: #856404;">
+                            Remaining to complete (grades): {{ item.remaining_to_complete }} course{{ item.remaining_to_complete|pluralize }}
+                        </div>
+                    {% endif %}
+
+                    {% if item.show_eligible or item.show_eligible_anyway %}
+                        <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #555;">
+                            <strong>Eligible Spring sections (from catalog):</strong>
+                            {% if item.eligible_sections %}
+                                <ul style="margin-top: 0.25rem; max-height: 10em; overflow-y: auto;">
+                                    {% for sec in item.eligible_sections %}
+                                        <li>{{ sec.full_code }} — {{ sec.course.title|truncatewords:8 }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p style="margin-top: 0.25rem;">None found for this core tag in current semester.</p>
+                            {% endif %}
+                        </div>
+                    {% elif item.remaining_to_plan == 0 and item.in_progress_courses %}
+                        <div style="margin-top: 0.5rem; font-size: 0.9rem;">
+                            <a href="?show_eligible=1">Show eligible sections anyway</a>
+                        </div>
+                    {% endif %}
+
+                    {% if show_debug %}
+                        <div class="core-debug" style="margin-top: 1rem; padding: 0.75rem; background: #f5f5f5; border-radius: 4px; font-size: 0.85rem;">
+                            <strong>Debug:</strong>
+                            <ul style="margin: 0.25rem 0 0 1rem;">
+                                <li>mapped_core_tag: {{ item.mapped_core_tag }}</li>
+                                <li>counted_completed: {{ item.completed_courses|join:", "|default:"—" }}</li>
+                                <li>counted_in_progress: {{ item.in_progress_courses|join:", "|default:"—" }}</li>
+                                <li>needs_courses: {{ item.needs_courses|default:"—" }}</li>
+                                <li>required_total: {{ item.required_total|default:"—" }}</li>
+                                <li>remaining_to_plan: {{ item.remaining_to_plan|default:"—" }}</li>
+                                <li>remaining_to_complete: {{ item.remaining_to_complete|default:"—" }}</li>
+                                <li>eligible_sections_count: {{ item.eligible_sections_count|default:0 }}</li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

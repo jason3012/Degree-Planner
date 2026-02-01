@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Semester, Course, Section
+from .models import Semester, Course, Section, CoreTag
+
+
+@admin.register(CoreTag)
+class CoreTagAdmin(admin.ModelAdmin):
+    list_display = ['name', 'created_at']
+    search_fields = ['name']
 
 
 @admin.register(Semester)
@@ -19,6 +25,7 @@ class CourseAdmin(admin.ModelAdmin):
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
     list_display = ['full_code', 'semester', 'instructor', 'location', 'status']
-    list_filter = ['semester', 'status', 'course']
+    list_filter = ['semester', 'status', 'course', 'core_tags']
     search_fields = ['course__course_code', 'instructor', 'location']
     raw_id_fields = ['semester', 'course']
+    filter_horizontal = ['core_tags']

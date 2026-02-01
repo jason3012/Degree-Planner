@@ -16,6 +16,18 @@ class Semester(models.Model):
         return f"{self.label} ({self.term_code})"
 
 
+class CoreTag(models.Model):
+    """Core requirement tag (e.g., Arts, Cultural Diversity). Sections can satisfy multiple cores."""
+    name = models.CharField(max_length=80, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Course(models.Model):
     """Base course (e.g., ARTS1101)."""
     course_code = models.CharField(
@@ -58,8 +70,14 @@ class Section(models.Model):
     ], default='open', blank=True)
     seats_open = models.IntegerField(null=True, blank=True)
     crn = models.CharField(max_length=10, blank=True, help_text="Course Registration Number")
+    core_tags = models.ManyToManyField(
+        CoreTag,
+        related_name='sections',
+        blank=True,
+        help_text='Core requirements this section satisfies (from CSV). Cross-listed sections can have multiple tags.'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         unique_together = [['semester', 'course', 'section_suffix']]
         ordering = ['course', 'section_suffix']

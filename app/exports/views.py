@@ -20,69 +20,39 @@ def export_dashboard(request):
 
 @login_required
 def export_csv_core_status(request):
-    """Export core status as CSV."""
-    from app.audits.models import AuditCourse
-    
+    """Export core status as CSV from audit-driven core_requirements."""
     latest_audit = Audit.objects.filter(user=request.user).order_by('-created_at').first()
     if not latest_audit:
         messages.error(request, 'No audit found.')
         return redirect('export_dashboard')
-    
-    # Get completed and in-progress courses
-    completed_courses = set(AuditCourse.objects.filter(
-        audit=latest_audit,
-        status='completed'
-    ).values_list('course_code', flat=True))
-    
-    in_progress_courses = set(AuditCourse.objects.filter(
-        audit=latest_audit,
-        status='in_progress'
-    ).values_list('course_code', flat=True))
-    
-    # Evaluate requirements
-    engine = RequirementsEngine()
-    evaluation = engine.evaluate(completed_courses, in_progress_courses)
-    
-    # Flatten requirements for CSV
-    def flatten_requirements(node_result, name='Root', rows=None):
-        if rows is None:
-            rows = []
-        
-        status = node_result.get('status', 'missing')
-        satisfied_by = ', '.join(node_result.get('satisfied_by', []))
-        still_needed = ', '.join(node_result.get('still_needed', []))
-        
+
+    core_requirements = getattr(latest_audit, 'core_requirements', None) or {}
+    if not isinstance(core_requirements, dict):
+        core_requirements = {}
+
+    rows = []
+    for name, data in core_requirements.items():
+        status = data.get('status', 'incomplete')
+        completed = ', '.join(data.get('completed_courses') or data.get('satisfied_by') or [])
+        remaining_to_plan = data.get('remaining_to_plan')
+        remaining_to_complete = data.get('remaining_to_complete')
+        remaining = ''
+        if remaining_to_plan is not None and remaining_to_plan > 0:
+            remaining = f"Remaining to plan: {remaining_to_plan} course(s)"
+        if remaining_to_complete is not None and remaining_to_complete > 0 and remaining_to_complete != remaining_to_plan:
+            remaining = (remaining + ' | Remaining to complete: ' + str(remaining_to_complete)) if remaining else f"Remaining to complete: {remaining_to_complete} course(s)"
         rows.append({
             'requirement_name': name,
             'status': status,
-            'satisfied_by': satisfied_by,
-            'still_needed': still_needed,
+            'counted_so_far': completed,
+            'remaining': remaining.strip(),
         })
-        
-        # Handle children - they're already evaluated results, not configs
-        children = node_result.get('children', [])
-        if children and isinstance(children[0], dict) and 'name' in children[0]:
-            # Children have names
-            for child in children:
-                child_name = child.get('name', 'Child')
-                flatten_requirements(child, f"{name} > {child_name}", rows)
-        elif children:
-            # Children are just results
-            for i, child in enumerate(children):
-                flatten_requirements(child, f"{name} > Requirement {i+1}", rows)
-        
-        return rows
-    
-    rows = flatten_requirements(evaluation)
-    
-    # Create CSV
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="core_status.csv"'
-    
-    writer = csv.DictWriter(response, fieldnames=['requirement_name', 'status', 'satisfied_by', 'still_needed'])
+    writer = csv.DictWriter(response, fieldnames=['requirement_name', 'status', 'counted_so_far', 'remaining'])
     writer.writeheader()
     writer.writerows(rows)
-    
     return response
 
 
